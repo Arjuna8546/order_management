@@ -2,6 +2,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { ShoppingCart, User, Mail, Package, X } from 'lucide-react';
 import { useState } from 'react';
+import { addOrder } from '../endpoints/api';
 
 const FormPage = () => {
   const [showSummary, setShowSummary] = useState(true);
@@ -19,23 +20,34 @@ const FormPage = () => {
 
   const formik = useFormik({
     initialValues: {
-      customerName: '',
-      customerId: '',
+      customer_name: '',
+      customer_id: '',
       quantity: 1,
       product: '',
-      productCost: '',
-      userEmail: ''
+      product_cost: '',
+      user_email: ''
     },
     validationSchema: Yup.object({
-      customerName: Yup.string().required('Customer name is required'),
-      customerId: Yup.string().required('Customer ID is required'),
+      customer_name: Yup.string().required('Customer name is required'),
+      customer_id: Yup.string().required('Customer ID is required'),
       quantity: Yup.number().min(1).required('Quantity is required'),
       product: Yup.string().required('Product is required'),
-      productCost: Yup.number().required('Product cost is required'),
-      userEmail: Yup.string().email('Invalid email').required('Email is required')
+      product_cost: Yup.number().required('Product cost is required'),
+      user_email: Yup.string().email('Invalid email').required('Email is required')
     }),
-    onSubmit: (values, { resetForm }) => {
-      console.log('Form Submitted:', values);
+    onSubmit: async(values, { resetForm }) => {
+      const selected = products.find(p => p.id === values.product);
+      const totalCost = parseFloat(values.product_cost) * parseInt(values.quantity);
+
+      const payload = {
+        ...values,
+        product: selected ? selected.name : '',
+        total_cost: totalCost
+      };
+
+      console.log('Submitting payload:', payload);
+      const res = await addOrder(payload);
+      console.log(res);
       setShowSummary(false);
       resetForm();
     }
@@ -44,13 +56,13 @@ const FormPage = () => {
   const handleProductChange = (productId) => {
     const selected = products.find(p => p.id === productId);
     formik.setFieldValue('product', productId);
-    formik.setFieldValue('productCost', selected ? selected.cost : '');
+    formik.setFieldValue('product_cost', selected ? selected.cost : '');
     setShowSummary(true);
   };
 
   const selectedProduct = products.find(p => p.id === formik.values.product);
-  const totalCost = formik.values.productCost && formik.values.quantity
-    ? (parseFloat(formik.values.productCost) * parseInt(formik.values.quantity)).toFixed(2)
+  const totalCost = formik.values.product_cost && formik.values.quantity
+    ? (parseFloat(formik.values.product_cost) * parseInt(formik.values.quantity)).toFixed(2)
     : '0.00';
 
   return (
@@ -72,26 +84,26 @@ const FormPage = () => {
                 <label className="font-medium">Customer Name</label>
                 <input
                   type="text"
-                  name="customerName"
+                  name="customer_name"
                   onChange={formik.handleChange}
-                  value={formik.values.customerName}
+                  value={formik.values.customer_name}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
-                {formik.touched.customerName && formik.errors.customerName && (
-                  <p className="text-red-500 text-sm">{formik.errors.customerName}</p>
+                {formik.touched.customer_name && formik.errors.customer_name && (
+                  <p className="text-red-500 text-sm">{formik.errors.customer_name}</p>
                 )}
               </div>
               <div>
                 <label className="font-medium">Customer ID</label>
                 <input
                   type="text"
-                  name="customerId"
+                  name="customer_id"
                   onChange={formik.handleChange}
-                  value={formik.values.customerId}
+                  value={formik.values.customer_id}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
-                {formik.touched.customerId && formik.errors.customerId && (
-                  <p className="text-red-500 text-sm">{formik.errors.customerId}</p>
+                {formik.touched.customer_id && formik.errors.customer_id && (
+                  <p className="text-red-500 text-sm">{formik.errors.customer_id}</p>
                 )}
               </div>
             </div>
@@ -99,13 +111,13 @@ const FormPage = () => {
               <label className="font-medium">Email</label>
               <input
                 type="email"
-                name="userEmail"
+                name="user_email"
                 onChange={formik.handleChange}
-                value={formik.values.userEmail}
+                value={formik.values.user_email}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               />
-              {formik.touched.userEmail && formik.errors.userEmail && (
-                <p className="text-red-500 text-sm">{formik.errors.userEmail}</p>
+              {formik.touched.user_email && formik.errors.user_email && (
+                <p className="text-red-500 text-sm">{formik.errors.user_email}</p>
               )}
             </div>
           </div>
@@ -153,8 +165,8 @@ const FormPage = () => {
               <label className="font-medium">Unit Cost</label>
               <input
                 type="number"
-                name="productCost"
-                value={formik.values.productCost}
+                name="product_cost"
+                value={formik.values.product_cost}
                 readOnly
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               />
@@ -178,7 +190,7 @@ const FormPage = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>Unit Price:</span>
-                    <span>₹{formik.values.productCost}</span>
+                    <span>₹{formik.values.product_cost}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Quantity:</span>
