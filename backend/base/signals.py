@@ -1,4 +1,3 @@
-# orders/signals.py
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -9,7 +8,7 @@ from django.conf import settings
 @receiver(post_save, sender=Order)
 def send_order_email(sender, instance, created, **kwargs):
     if created:
-        subject = f"🧾 Order #{instance.id} - {instance.customer_name}"
+        subject = f"Order #{instance.id} placed by {instance.customer_name}"
         
         html_content = f"""
         <html>
@@ -49,8 +48,9 @@ def send_order_email(sender, instance, created, **kwargs):
         email = EmailMessage(
             subject=subject,
             body=html_content,
-            from_email=settings.EMAIL_HOST_USER,
-            to=["arjunvv447@gmail.com"],
+            from_email="Your Name <arjunvv447@gmail.com>",
+            to=["4rjuvv2002@gmail.com"],
+            reply_to=["arjunvv447@gmail.com"]
         )
         email.content_subtype = "html" 
         email.send()
