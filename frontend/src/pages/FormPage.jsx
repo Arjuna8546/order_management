@@ -3,9 +3,11 @@ import * as Yup from 'yup';
 import { ShoppingCart, User, Mail, Package, X } from 'lucide-react';
 import { useState } from 'react';
 import { addOrder } from '../endpoints/api';
+import { toast } from 'sonner';
 
 const FormPage = () => {
   const [showSummary, setShowSummary] = useState(true);
+  const [loading, setLoading] = useState(false)
 
   const products = [
     { id: 'laptop-dell', name: 'Dell Laptop XPS 13', cost: 1299.99 },
@@ -35,7 +37,8 @@ const FormPage = () => {
       product_cost: Yup.number().required('Product cost is required'),
       user_email: Yup.string().email('Invalid email').required('Email is required')
     }),
-    onSubmit: async(values, { resetForm }) => {
+    onSubmit: async (values, { resetForm }) => {
+      setLoading(true);
       const selected = products.find(p => p.id === values.product);
       const totalCost = parseFloat(values.product_cost) * parseInt(values.quantity);
 
@@ -45,11 +48,21 @@ const FormPage = () => {
         total_cost: totalCost
       };
 
-      console.log('Submitting payload:', payload);
-      const res = await addOrder(payload);
-      console.log(res);
-      setShowSummary(false);
-      resetForm();
+      try {
+        const res = await addOrder(payload);
+
+        if (res.data.success) {
+          toast.success(`Order #${res.data.data.id} submitted successfully`);
+          setShowSummary(false);
+          resetForm();
+        } else {
+          toast.error('Failed to submit order. Please check your input.');
+        }
+      } catch (err) {
+        toast.error('Something went wrong while submitting the order.');
+      }finally{
+        setLoading(false);
+      }
     }
   });
 
@@ -208,10 +221,14 @@ const FormPage = () => {
           <div className="flex justify-center pt-4">
             <button
               type="submit"
-              className="w-full md:w-auto px-8 py-3 bg-black text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center gap-2"
+              disabled={loading}
+              className={`w-full md:w-auto px-8 py-3 ${loading ? 'bg-gray-600 cursor-not-allowed' : 'bg-black hover:scale-105'
+                } text-white font-semibold rounded-lg transition-all duration-200 transform shadow-lg flex items-center gap-2`}
             >
-              <ShoppingCart className="h-5 w-5" /> Submit Order
+              <ShoppingCart className="h-5 w-5" />
+              {loading ? 'Submitting...' : 'Submit Order'}
             </button>
+
           </div>
         </form>
       </div>
